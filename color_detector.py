@@ -18,9 +18,7 @@ def find_color(input_color):
     return {i: key for i, key in enumerate(COLORS)}[min_idx]
 
 
-if __name__ == "__main__":
-    img = cv2.imread("data/1.jpeg")
-
+def preprocess_img(img):
     # convert to grayscale
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     # blur to remove noise, kernel size set to large because
@@ -31,8 +29,10 @@ if __name__ == "__main__":
     # make lines thicker by dilating
     kernel = np.ones((5, 5), np.uint8)
     dilated = cv2.dilate(canny, kernel, iterations=2)
+    return dilated
 
-    # contours?
+
+def squares_from_contours(dilated):
     contours, _ = cv2.findContours(
         dilated.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
     )
@@ -46,8 +46,8 @@ if __name__ == "__main__":
         side_length = np.sqrt(area)
         # render if satisfy the following conditions:
         # 1. 4 corners
-        # 2. all four lines must be roughly the same length
-        # 3. all four corners must be roughly 90 degrees
+        # 2. [side_length], or square root of [area] is
+        # within the defined threshold (requires some tuning)
         if (
             len(approx) == 4
             and cv2.isContourConvex(approx)
@@ -56,29 +56,48 @@ if __name__ == "__main__":
         ):
             approxs.append(approx)
 
+    return approxs
+
+
+def increase_saturation(img, value=SATURATION_INCREASE_VALUE):
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     h, s, v = cv2.split(hsv)
-    s += SATURATION_INCREASE_VALUE
+    # TODO: does not work well with very saturated colors
+    s += value
     final_hsv = cv2.merge((h, s, v))
-    img = cv2.cvtColor(final_hsv, cv2.COLOR_HSV2BGR)
+    img2 = cv2.cvtColor(final_hsv, cv2.COLOR_HSV2BGR)
+    return img2
 
+
+def sort_contours_by_pos(contours):
     # find top left square
-    approxs.sort(key=lambda item: item[0][0][0] + item[0][0][1])
-    first = approxs[0]
+    contours.sort(key=lambda item: item[0][0][0] + item[0][0][1])
+    first = contours[0]
 
     # sort by rows
-    approxs.sort(key=lambda item: item[0][0][1] - first[0][0][1])
-    rows = []
-    for i in range(0, len(approxs), CUBE_SIDE):
-        temp = approxs[i : i + CUBE_SIDE]
+    contours.sort(key=lambda item: item[0][0][1] - first[0][0][1])
+    sorted_contours = []
+    for i in range(0, len(contours), CUBE_SIDE):
+        temp = contours[i : i + CUBE_SIDE]
         temp.sort(key=lambda item: item[0][0][0])
-        rows.extend(temp)
+        sorted_contours.extend(temp)
+    return sorted_contours
 
-    rgbs = []
+
+def compute_color_locs(img, name):
+    dilated = preprocess_img(img)
+
+    contours = squares_from_contours(dilated)
+
+    img = increase_saturation(img)
+
+    sorted_contours = sort_contours_by_pos(contours)
+
+    color_locs = []
 
     # extract color
-    for i in range(len(rows)):
-        approx = rows[i]
+    for i in range(len(sorted_contours)):
+        approx = sorted_contours[i]
         cv2.drawContours(img, [approx], -1, (0, 255, 255), 5)
         mid_x = 0
         mid_y = 0
@@ -89,7 +108,16 @@ if __name__ == "__main__":
         mid_y /= 4
         b, g, r = img[int(mid_y)][int(mid_x)]
         r, g, b = COLORS[find_color((r, g, b))]
-        print(find_color((r, g, b)))
+        if i % 3 == 0:
+            color_locs.append([find_color((r, g, b))])
+        else:
+            color_locs[-1].append(find_color((r, g, b)))
         cv2.fillPoly(img, [approx], (b, g, r))
 
-    cv2.imwrite("output/target.png", img)
+    cv2.imwrite("output/%s.png" % name, img)
+    return color_locs
+
+
+if __name__ == "__main__":
+    img = cv2.imread("data/1.jpeg")
+    print(compute_color_locs(img, "img1"))
