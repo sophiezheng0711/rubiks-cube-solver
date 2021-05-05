@@ -1,6 +1,6 @@
 # rubiks-cube-solver
 
-A Computer Vision-based Rubik's Cube Solver that uses edge and color detection and the Kociemba algorithm to solve the cube.
+A Computer Vision-based 3x3x3 Rubik's Cube Solver that uses edge and color detection and the Kociemba algorithm to solve the cube.
 
 ## User Manual
 
@@ -11,12 +11,19 @@ Adjust your cube's positioning until the colors are identified and are outlined 
 
 ## Edge Detection
 
-// TODO
+We use a OpenCV-based approach of applying a gaussian filter, a canny edge detector, and computing contours of the resulting image. Then, we approximate the polygon version of the contours, and find the ones that satisfy the following criterions:
+
+- the contour has 4 edges
+- the contour is convex
+- the contour has side length within a fine-tuned threshold
+- the contour is not nested with another contour
+
+If we obtain 9 squares after the processing, this step is done.
 
 ## Color Detection
 
-// TODO
+Initially, we tried the Cartesian distance between the RGB values, and that did not work well. Thus, we used the [CIEDE2000](https://en.wikipedia.org/wiki/Color_difference#CIEDE2000) method. This method requires a conversion from RGB to [LAB](https://en.wikipedia.org/wiki/CIELAB_color_space#CIELAB) colorspace. After some research, this method proved to work well with our given case.
 
-## Kociemba algorithm
+## Kociemba Algorithm
 
-// TODO
+We solve the Rubik's cube using the Kociemba Algorithm. Initially, we also looked at Korf's Algorithm, which involved a pattern database with a heuristic search algorithm, but that simply required too much unnecessary space and time. We used the python `kociemba` package. See [Wikipedia reference](https://en.wikipedia.org/wiki/Optimal_solutions_for_Rubik%27s_Cube#Kociemba's_algorithm).
