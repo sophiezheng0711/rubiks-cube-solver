@@ -45,7 +45,11 @@ def preprocess_img(img):
     return dilated
 
 
-def squares_from_contours(dilated):
+def squares_from_contours(
+    dilated,
+    min_side_length_threshold=MIN_SIDE_LENGTH_THRESHOLD,
+    max_side_length_threshold=MAX_SIDE_LENGTH_THRESHOLD,
+):
     contours, hierarchy = cv2.findContours(
         dilated.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
     )
@@ -68,8 +72,8 @@ def squares_from_contours(dilated):
     items = list(
         filter(
             lambda item: len(item[0]) == 4
-            and np.sqrt(cv2.contourArea(item[0])) > MIN_SIDE_LENGTH_THRESHOLD
-            and np.sqrt(cv2.contourArea(item[0])) < MAX_SIDE_LENGTH_THRESHOLD
+            and np.sqrt(cv2.contourArea(item[0])) > min_side_length_threshold
+            and np.sqrt(cv2.contourArea(item[0])) < max_side_length_threshold
             and cv2.isContourConvex(item[0]),
             items,
         )
@@ -142,7 +146,7 @@ def color_locs_from_contours(sorted_contours, brightened_img, img):
 def compute_color_locs(img, name):
     dilated = preprocess_img(img)
 
-    contours = squares_from_contours(dilated)
+    contours = squares_from_contours(dilated, 70, 200)
 
     img1 = increase_brightness(img)
 
