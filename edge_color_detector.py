@@ -117,6 +117,7 @@ def sort_contours_by_pos(contours):
 
 def color_locs_from_contours(sorted_contours, brightened_img, img):
     color_locs = []
+    center_locs = []
 
     # extract color
     for i in range(len(sorted_contours)):
@@ -136,14 +137,16 @@ def color_locs_from_contours(sorted_contours, brightened_img, img):
         r, g, b = COLORS[find_color_ciede2000(lab)]
         if i % 3 == 0:
             color_locs.append([find_color_ciede2000(lab)])
+            center_locs.append([(int(mid_x), int(mid_y))])
         else:
             color_locs[-1].append(find_color_ciede2000(lab))
+            center_locs[-1].append((int(mid_x), int(mid_y)))
         cv2.fillPoly(img, [approx], (b, g, r))
 
-    return color_locs
+    return color_locs, center_locs
 
 
-def compute_color_locs(img, name):
+def example_compute_color_locs(img, name):
     dilated = preprocess_img(img)
 
     contours = squares_from_contours(dilated, 70, 200)
@@ -152,7 +155,7 @@ def compute_color_locs(img, name):
 
     sorted_contours = sort_contours_by_pos(contours)
 
-    color_locs = color_locs_from_contours(sorted_contours, img1, img)
+    color_locs, _ = color_locs_from_contours(sorted_contours, img1, img)
 
     if name != None:
         cv2.imwrite("output/%s.png" % name, img)
@@ -166,12 +169,12 @@ def convert_face_to_string(color_locs, colors_2_code):
 
 def image_example():
     # in the order of U->L->F->R->B->D
-    color_locs1 = compute_color_locs(cv2.imread("data/1.jpeg"), None)
-    color_locs2 = compute_color_locs(cv2.imread("data/2.jpeg"), None)
-    color_locs3 = compute_color_locs(cv2.imread("data/3.jpeg"), None)
-    color_locs4 = compute_color_locs(cv2.imread("data/4.jpeg"), None)
-    color_locs5 = compute_color_locs(cv2.imread("data/5.jpeg"), None)
-    color_locs6 = compute_color_locs(cv2.imread("data/6.jpeg"), None)
+    color_locs1 = example_compute_color_locs(cv2.imread("data/1.jpeg"), None)
+    color_locs2 = example_compute_color_locs(cv2.imread("data/2.jpeg"), None)
+    color_locs3 = example_compute_color_locs(cv2.imread("data/3.jpeg"), None)
+    color_locs4 = example_compute_color_locs(cv2.imread("data/4.jpeg"), None)
+    color_locs5 = example_compute_color_locs(cv2.imread("data/5.jpeg"), None)
+    color_locs6 = example_compute_color_locs(cv2.imread("data/6.jpeg"), None)
 
     color_2_code = {}
     color_2_code[color_locs1[1][1]] = "U"

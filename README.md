@@ -5,7 +5,7 @@ A Computer Vision-based 3x3x3 Rubik's Cube Solver that uses edge and color detec
 ## User Manual
 
 Run `python3 stream.py` to start the live stream version of the solver. You can see an empty structure of the cube on the top left corner.
-Adjust your cube's positioning until the colors are identified and are outlined in the app. Then, press **SPACE** to add it to the structure. Do so in the order of the top side, the left side, the front side, the right side, the back side, and the bottom side. After all sides are added and confirmed, press **ENTER** to start the solving phase. If you make mistakes of adding faces, you can always delete them by pressing the **DELETE** button. You can press **ESC** to exit at any time.
+Adjust your cube's positioning until the colors are identified and are outlined in the app. Then, press **SPACE** to add it to the structure. Do so in the order of the top side, the left side, the front side, the right side, the back side, and the bottom side. After all sides are added and confirmed, press **ENTER** to start the solving phase. If you make mistakes of adding faces, you can always delete them by pressing the **DELETE** button. You can press **ESC** to exit at any time. After the cube is solved, the app will give you a step by step tutorial on how to solve the cube. Hold the front face of the cube towards the camera, and arrows on the app will appear to help you (see [this manual](https://ruwix.com/the-rubiks-cube/notation/) for reference). You can go back to a step by pressing the **LEFT ARROW** key, or skip to a future step by pressing the **RIGHT ARROW** key.
 
 ![Alt Text](scan_demo.gif)
 
