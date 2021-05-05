@@ -1,18 +1,25 @@
 import math
 
-MIN_SIDE_LENGTH_THRESHOLD = 100
+MIN_SIDE_LENGTH_THRESHOLD = 70
 MAX_SIDE_LENGTH_THRESHOLD = 200
-SATURATION_INCREASE_VALUE = 50
+SATURATION_INCREASE_VALUE = 30
 CUBE_SIDE = 3
 COLORS = {
-    "red": (255, 50, 0),
-    "green": (0, 150, 0),
-    "blue": (0, 0, 255),
-    "yellow": (255, 160, 0),
-    "orange": (255, 102, 0),
+    "red": (145, 30, 30),
+    "green": (20, 164, 80),
+    "blue": (32, 90, 150),
+    "yellow": (222, 242, 80),
+    "orange": (255, 95, 70),
     "white": (255, 255, 255),
 }
-CLOSE_THRESHOLD = 160
+COLORS2CODE = {
+    "red": "U",
+    "green": "R",
+    "blue": "L",
+    "yellow": "B",
+    "orange": "D",
+    "white": "F",
+}
 
 
 # Taken from https://stackoverflow.com/a/16020102

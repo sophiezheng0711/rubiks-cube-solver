@@ -6,10 +6,11 @@ from constants import (
     SATURATION_INCREASE_VALUE,
     CUBE_SIDE,
     COLORS,
-    CLOSE_THRESHOLD,
+    COLORS2CODE,
     CIEDE2000,
     BGR2LAB,
 )
+import kociemba
 
 
 def find_color(input_color):
@@ -36,78 +37,59 @@ def preprocess_img(img):
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     # blur to remove noise, kernel size set to large because
     # don't care about details, we just want to extract the color.
-    blurred = cv2.GaussianBlur(gray, (11, 11), 0)
+    blurred = cv2.GaussianBlur(gray, (3, 3), 0)
     # perform edge detection with canny edge detector
     canny = cv2.Canny(blurred, 20, 40)
     # make lines thicker by dilating
-    kernel = np.ones((5, 5), np.uint8)
+    kernel = np.ones((7, 7), np.uint8)
     dilated = cv2.dilate(canny, kernel, iterations=2)
     return dilated
 
 
-def is_close_to(cnt1, cnt2):
-    corner1 = (
-        np.sqrt(
-            (cnt1[0][0][0] - cnt2[0][0][0]) ** 2 + (cnt1[0][0][1] - cnt2[0][0][1]) ** 2
-        )
-        <= CLOSE_THRESHOLD
-    )
-    corner2 = (
-        np.sqrt(
-            (cnt1[2][0][0] - cnt2[2][0][0]) ** 2 + (cnt1[2][0][1] - cnt2[2][0][1]) ** 2
-        )
-        <= CLOSE_THRESHOLD
-    )
-    return corner1 and corner2
-
-
 def squares_from_contours(dilated):
-    contours, _ = cv2.findContours(
+    contours, hierarchy = cv2.findContours(
         dilated.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
     )
 
-    approxs = [
-        cv2.approxPolyDP(contour, 0.1 * cv2.arcLength(contour, True), closed=True)
-        for contour in contours
+    # we set items in the format of [approx, hierarchy, index]
+    items = [
+        (
+            cv2.approxPolyDP(contour, 0.1 * cv2.arcLength(contour, True), closed=True),
+            rel,
+            i,
+        )
+        for i, (contour, rel) in enumerate(zip(contours, hierarchy[0]))
     ]
 
     # filter out polygons that do not have 4 sides
     # filter out polygons that do not match the side length thresholds
-    approxs = list(
+    # filter out polygons that are not convex
+    items = list(
         filter(
-            lambda approx: len(approx) == 4
-            and np.sqrt(cv2.contourArea(approx)) > MIN_SIDE_LENGTH_THRESHOLD
-            and np.sqrt(cv2.contourArea(approx)) < MAX_SIDE_LENGTH_THRESHOLD,
-            approxs,
+            lambda item: len(item[0]) == 4
+            and np.sqrt(cv2.contourArea(item[0])) > MIN_SIDE_LENGTH_THRESHOLD
+            and np.sqrt(cv2.contourArea(item[0])) < MAX_SIDE_LENGTH_THRESHOLD
+            and cv2.isContourConvex(item[0]),
+            items,
         )
     )
 
-    # results = []
+    # find all existing indicies of contours after the first filter
+    contour_idx_set = set([item[2] for item in items])
 
-    # # filtering overlapping contours by checking two opposite corners
-    # flagged_approxs = set()
+    # filter all contours that have children also in the filtered contours (overlap)
+    # hierarchy is in format [Next, Previous, First_child, Parent]
+    items = list(filter(lambda item: not item[1][2] in contour_idx_set, items))
 
-    # for i in range(len(approxs)):
-    #     a1 = approxs[i]
-    #     if i in flagged_approxs:
-    #         continue
-    #     for j in range(len(approxs)):
-    #         if i == j:
-    #             continue
-    #         a2 = approxs[j]
-    #         if is_close_to(a1, a2):
-    #             flagged_approxs.add(j)
-    #             break
-    #     results.append(a1)
-
-    return approxs
+    return [item[0] for item in items]
 
 
-def increase_saturation(img, value=SATURATION_INCREASE_VALUE):
+def increase_brightness(img, value=SATURATION_INCREASE_VALUE):
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     h, s, v = cv2.split(hsv)
-    # TODO: does not work well with very saturated colors
-    s += value
+    lim = 255 - value
+    v[v > lim] = 255
+    v[v <= lim] += value
     final_hsv = cv2.merge((h, s, v))
     img2 = cv2.cvtColor(final_hsv, cv2.COLOR_HSV2BGR)
     return img2
@@ -133,7 +115,7 @@ def compute_color_locs(img, name):
 
     contours = squares_from_contours(dilated)
 
-    # img = increase_saturation(img)
+    img = increase_brightness(img)
 
     sorted_contours = sort_contours_by_pos(contours)
 
@@ -161,10 +143,46 @@ def compute_color_locs(img, name):
             color_locs[-1].append(find_color_ciede2000(lab))
         cv2.fillPoly(img, [approx], (b, g, r))
 
-    cv2.imwrite("output/%s.png" % name, img)
+    if name != None:
+        cv2.imwrite("output/%s.png" % name, img)
     return color_locs
 
 
+def convert_face_to_string(color_locs):
+    rows = ["".join([COLORS2CODE[color] for color in row]) for row in color_locs]
+    return "".join(rows)
+
+
+def image_example():
+    colors1 = convert_face_to_string(
+        compute_color_locs(cv2.imread("data/1.jpeg"), None)
+    )
+    colors2 = convert_face_to_string(
+        compute_color_locs(cv2.imread("data/2.jpeg"), None)
+    )
+    colors3 = convert_face_to_string(
+        compute_color_locs(cv2.imread("data/3.jpeg"), None)
+    )
+    colors4 = convert_face_to_string(
+        compute_color_locs(cv2.imread("data/4.jpeg"), None)
+    )
+    colors5 = convert_face_to_string(
+        compute_color_locs(cv2.imread("data/5.jpeg"), None)
+    )
+    colors6 = convert_face_to_string(
+        compute_color_locs(cv2.imread("data/6.jpeg"), None)
+    )
+    res = ""
+    # In the order of U->R->F->D->L->B
+    res += colors1 + colors4 + colors3 + colors6 + colors2 + colors5
+    return res
+
+
 if __name__ == "__main__":
-    img = cv2.imread("data/4.jpeg")
-    print(compute_color_locs(img, "img4"))
+    # img = cv2.imread("data/6.jpeg")
+    # color_locs = compute_color_locs(img, "img6")
+    # print(convert_face_to_string(color_locs))
+
+    example_str = image_example()
+    print(example_str)
+    print(kociemba.solve(example_str))
