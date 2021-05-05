@@ -6,7 +6,6 @@ from constants import (
     SATURATION_INCREASE_VALUE,
     CUBE_SIDE,
     COLORS,
-    COLORS2CODE,
     CIEDE2000,
     BGR2LAB,
 )
@@ -50,6 +49,8 @@ def squares_from_contours(dilated):
     contours, hierarchy = cv2.findContours(
         dilated.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
     )
+    if contours == None or len(contours) == 0:
+        return []
 
     # we set items in the format of [approx, hierarchy, index]
     items = [
@@ -110,15 +111,7 @@ def sort_contours_by_pos(contours):
     return sorted_contours
 
 
-def compute_color_locs(img, name):
-    dilated = preprocess_img(img)
-
-    contours = squares_from_contours(dilated)
-
-    img = increase_brightness(img)
-
-    sorted_contours = sort_contours_by_pos(contours)
-
+def color_locs_from_contours(sorted_contours, brightened_img, img):
     color_locs = []
 
     # extract color
@@ -132,7 +125,7 @@ def compute_color_locs(img, name):
             mid_y += point[0][1]
         mid_x /= 4
         mid_y /= 4
-        b, g, r = img[int(mid_y)][int(mid_x)]
+        b, g, r = brightened_img[int(mid_y)][int(mid_x)]
 
         lab = BGR2LAB((b, g, r))
 
@@ -143,35 +136,53 @@ def compute_color_locs(img, name):
             color_locs[-1].append(find_color_ciede2000(lab))
         cv2.fillPoly(img, [approx], (b, g, r))
 
+    return color_locs
+
+
+def compute_color_locs(img, name):
+    dilated = preprocess_img(img)
+
+    contours = squares_from_contours(dilated)
+
+    img1 = increase_brightness(img)
+
+    sorted_contours = sort_contours_by_pos(contours)
+
+    color_locs = color_locs_from_contours(sorted_contours, img1, img)
+
     if name != None:
         cv2.imwrite("output/%s.png" % name, img)
     return color_locs
 
 
-def convert_face_to_string(color_locs):
-    rows = ["".join([COLORS2CODE[color] for color in row]) for row in color_locs]
+def convert_face_to_string(color_locs, colors_2_code):
+    rows = ["".join([colors_2_code[color] for color in row]) for row in color_locs]
     return "".join(rows)
 
 
 def image_example():
-    colors1 = convert_face_to_string(
-        compute_color_locs(cv2.imread("data/1.jpeg"), None)
-    )
-    colors2 = convert_face_to_string(
-        compute_color_locs(cv2.imread("data/2.jpeg"), None)
-    )
-    colors3 = convert_face_to_string(
-        compute_color_locs(cv2.imread("data/3.jpeg"), None)
-    )
-    colors4 = convert_face_to_string(
-        compute_color_locs(cv2.imread("data/4.jpeg"), None)
-    )
-    colors5 = convert_face_to_string(
-        compute_color_locs(cv2.imread("data/5.jpeg"), None)
-    )
-    colors6 = convert_face_to_string(
-        compute_color_locs(cv2.imread("data/6.jpeg"), None)
-    )
+    # in the order of U->L->F->R->B->D
+    color_locs1 = compute_color_locs(cv2.imread("data/1.jpeg"), None)
+    color_locs2 = compute_color_locs(cv2.imread("data/2.jpeg"), None)
+    color_locs3 = compute_color_locs(cv2.imread("data/3.jpeg"), None)
+    color_locs4 = compute_color_locs(cv2.imread("data/4.jpeg"), None)
+    color_locs5 = compute_color_locs(cv2.imread("data/5.jpeg"), None)
+    color_locs6 = compute_color_locs(cv2.imread("data/6.jpeg"), None)
+
+    color_2_code = {}
+    color_2_code[color_locs1[1][1]] = "U"
+    color_2_code[color_locs2[1][1]] = "L"
+    color_2_code[color_locs3[1][1]] = "F"
+    color_2_code[color_locs4[1][1]] = "R"
+    color_2_code[color_locs5[1][1]] = "B"
+    color_2_code[color_locs6[1][1]] = "D"
+
+    colors1 = convert_face_to_string(color_locs1, color_2_code)
+    colors2 = convert_face_to_string(color_locs2, color_2_code)
+    colors3 = convert_face_to_string(color_locs3, color_2_code)
+    colors4 = convert_face_to_string(color_locs4, color_2_code)
+    colors5 = convert_face_to_string(color_locs5, color_2_code)
+    colors6 = convert_face_to_string(color_locs6, color_2_code)
     res = ""
     # In the order of U->R->F->D->L->B
     res += colors1 + colors4 + colors3 + colors6 + colors2 + colors5
