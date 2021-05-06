@@ -341,11 +341,10 @@ class Stream:
             )
 
             if not self.isSolved:
-                if key == 127:
+                if key == 127 and len(self.cube) > 0:
                     del self.cube[-1]
 
                 if key == 13:
-                    print(len(self.cube))
                     if len(self.cube) == 6:
                         color_2_code = {}
                         color_2_code[self.cube[0][1][1]] = "U"
@@ -360,7 +359,7 @@ class Stream:
                         r = convert_face_to_string(self.cube[3], color_2_code)
                         b = convert_face_to_string(self.cube[4], color_2_code)
                         d = convert_face_to_string(self.cube[5], color_2_code)
-                        self.solution = kociemba.solve(u + r + f + d + l + b)
+                        self.solution = kociemba.solve(u + r + f + d + l + b).split(" ")
                         self.isSolved = True
                         print(self.solution)
 
@@ -374,7 +373,7 @@ class Stream:
                         sorted_contours, frame1, frame
                     )
 
-                    if key == 32:
+                    if key == 32 and len(self.cube) < 6:
                         self.cube.append(color_locs)
 
             else:
