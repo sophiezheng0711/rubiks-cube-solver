@@ -9,6 +9,8 @@ Adjust your cube's positioning until the colors are identified and are outlined 
 
 ![Alt Text](scan_demo.gif)
 
+To see a full demo, go [here](https://drive.google.com/file/d/1wYjh0bRD8KbtMLeGF6P8vV11lJxACVbp/view?usp=sharing).
+
 ## Edge Detection
 
 We use a OpenCV-based approach of applying a gaussian filter, a canny edge detector, and computing contours of the resulting image. Then, we approximate the polygon version of the contours, and find the ones that satisfy the following criterions:
