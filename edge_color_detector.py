@@ -79,7 +79,7 @@ def squares_from_contours(
         )
     )
 
-    # find all existing indicies of contours after the first filter
+    # find all existing indices of contours after the first filter
     contour_idx_set = set([item[2] for item in items])
 
     # filter all contours that have children also in the filtered contours (overlap)
@@ -197,8 +197,8 @@ def image_example():
 
 
 if __name__ == "__main__":
-    # img = cv2.imread("data/6.jpeg")
-    # color_locs = compute_color_locs(img, "img6")
+    # img = cv2.imread("data/5.jpeg")
+    # color_locs = example_compute_color_locs(img, "temp")
     # print(convert_face_to_string(color_locs))
 
     example_str = image_example()
