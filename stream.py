@@ -346,22 +346,28 @@ class Stream:
 
                 if key == 13:
                     if len(self.cube) == 6:
-                        color_2_code = {}
-                        color_2_code[self.cube[0][1][1]] = "U"
-                        color_2_code[self.cube[1][1][1]] = "L"
-                        color_2_code[self.cube[2][1][1]] = "F"
-                        color_2_code[self.cube[3][1][1]] = "R"
-                        color_2_code[self.cube[4][1][1]] = "B"
-                        color_2_code[self.cube[5][1][1]] = "D"
-                        u = convert_face_to_string(self.cube[0], color_2_code)
-                        l = convert_face_to_string(self.cube[1], color_2_code)
-                        f = convert_face_to_string(self.cube[2], color_2_code)
-                        r = convert_face_to_string(self.cube[3], color_2_code)
-                        b = convert_face_to_string(self.cube[4], color_2_code)
-                        d = convert_face_to_string(self.cube[5], color_2_code)
-                        self.solution = kociemba.solve(u + r + f + d + l + b).split(" ")
-                        self.isSolved = True
-                        print(self.solution)
+                        try:
+                            color_2_code = {}
+                            color_2_code[self.cube[0][1][1]] = "U"
+                            color_2_code[self.cube[1][1][1]] = "L"
+                            color_2_code[self.cube[2][1][1]] = "F"
+                            color_2_code[self.cube[3][1][1]] = "R"
+                            color_2_code[self.cube[4][1][1]] = "B"
+                            color_2_code[self.cube[5][1][1]] = "D"
+                            u = convert_face_to_string(self.cube[0], color_2_code)
+                            l = convert_face_to_string(self.cube[1], color_2_code)
+                            f = convert_face_to_string(self.cube[2], color_2_code)
+                            r = convert_face_to_string(self.cube[3], color_2_code)
+                            b = convert_face_to_string(self.cube[4], color_2_code)
+                            d = convert_face_to_string(self.cube[5], color_2_code)
+                            self.solution = kociemba.solve(u + r + f + d + l + b).split(
+                                " "
+                            )
+                            self.isSolved = True
+                            print(self.solution)
+                        except:
+                            self.cube = []
+                            print("Error: incorrect cube string.")
 
                 dilated = preprocess_img(frame1)
                 contours = squares_from_contours(dilated)
